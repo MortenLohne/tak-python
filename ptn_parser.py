@@ -5,7 +5,7 @@ from tak import GameState
 
 
 def is_result(word):
-    return word == 'R-0' or word == 'F-0' or word == "0-R" or word == "0-F"
+    return word == 'R-0' or word == 'F-0' or word == "0-R" or word == "0-F" or word == "1-0" or word == "0-1" or word == "1/2-1/2"
 
 
 def add_ptn(ptn, max_plies=sys.maxsize):
@@ -18,7 +18,7 @@ def add_ptn(ptn, max_plies=sys.maxsize):
 
     # parse headers
     spl = headers.split("\n")
-    size = 0
+    size = 6
     result = '*'
 
     for line in spl:
@@ -31,18 +31,11 @@ def add_ptn(ptn, max_plies=sys.maxsize):
         return
 
     # parse moves
-    spl = moves.split("\n")
     all_moves = []
 
-    for row in spl:
-        if len(row) == 0:
-            continue
-        two_ply = row.split(" ")
-        if not is_result(two_ply[0]):
-            all_moves.append(two_ply[1])
-
-        if len(two_ply) > 2:
-            all_moves.append(two_ply[2])
+    for move_string in moves.split():
+        if len(move_string) > 0 and not move_string.__contains__('.') and not is_result(move_string):
+            all_moves.append(move_string)
 
     # apply upper bound of ply depth
     all_moves = all_moves[0:min(len(all_moves), max_plies)]
@@ -83,7 +76,7 @@ def main(ptn_file):
         ptn += line
         line = f.readline()
         while line:
-            if line.startswith("[Site"):
+            if line.startswith("[Event"):
                 positions.extend(add_ptn(ptn, max_plies))
                 ptn = ''
                 ptns += 1
@@ -93,3 +86,4 @@ def main(ptn_file):
 
     for position in positions[:10]:
         print(position.print_state())
+        print(position.get_tps())
