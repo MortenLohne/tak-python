@@ -87,20 +87,30 @@ class GameState:
         # check for move command:
         try:
             stack_height = int(ptn[0])
+            ptn = ptn[1:]
             move_command = True
         except ValueError:
-            stack_height = 0
-            move_command = False
+            if len(ptn) > 2 and '+-<>'.__contains__(ptn[2]):
+                stack_height = 0
+                move_command = True
+            else:
+                stack_height = 0
+                move_command = False
 
         if move_command:
             s = []
-            ptn = ptn[1:]
             square_idx = ptn[0:2]
             square = self.get_square(square_idx)
+            if stack_height == 0:
+                stack_height = 1
+
             for i in range(0, stack_height):
                 s.append(square.stones.pop())
             direction = ptn[2]
-            rest = ptn[3:]
+            if len(ptn) > 3:
+                rest = ptn[3:]
+            else:
+                rest = str(stack_height)
             for i in range(0, len(rest)):
                 square_idx = get_adjacent(square_idx, direction)
                 square = self.get_square(square_idx)
@@ -127,6 +137,8 @@ class GameState:
 
             # get target square
             square = self.get_square(ptn)
+            if len(square.stones) != 0:
+                raise Exception(f'Tried to place stone type {stone_type} on occupied square {ptn}')
             square.stones.append(Stone(colour_to_place, stone_type))
 
         # switch active player

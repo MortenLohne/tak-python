@@ -70,6 +70,8 @@ def main(ptn_file):
     print(f'Counted {count} games')
     f.close()
 
+    ptns = 0
+
     with open(ptn_file) as f:
         line = f.readline()
         ptn += line
@@ -78,5 +80,7 @@ def main(ptn_file):
             if line.startswith("[Site"):
                 add_ptn(ptn, max_plies)
                 ptn = ''
+                ptns += 1
+                print(f'Read {ptns} ptns')
             ptn += line
             line = f.readline()
