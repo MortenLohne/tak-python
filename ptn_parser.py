@@ -1,3 +1,4 @@
+import copy
 import sys
 
 from tak import GameState
@@ -49,12 +50,15 @@ def add_ptn(ptn, max_plies=sys.maxsize):
     # create board
     tak = GameState(size)
 
+    positions = []
+
     # make all moves
     for i in range(0, len(all_moves)):
         last_tps = tak.get_tps()
         tak.move(all_moves[i])
         last_move = all_moves[i]
-        print(f'Last_move {last_move}, result {result}, tps {tak.get_tps()}')
+        positions.append(copy.deepcopy(tak))
+    return positions
 
 
 def main(ptn_file):
@@ -72,15 +76,20 @@ def main(ptn_file):
 
     ptns = 0
 
+    positions = [];
+
     with open(ptn_file) as f:
         line = f.readline()
         ptn += line
         line = f.readline()
         while line:
             if line.startswith("[Site"):
-                add_ptn(ptn, max_plies)
+                positions.extend(add_ptn(ptn, max_plies))
                 ptn = ''
                 ptns += 1
                 print(f'Read {ptns} ptns')
             ptn += line
             line = f.readline()
+
+    for position in positions[:10]:
+        print(position.print_state())
