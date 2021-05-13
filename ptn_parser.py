@@ -1,5 +1,6 @@
 import copy
 import sys
+import numpy
 
 from tak import GameState
 
@@ -51,7 +52,36 @@ def add_ptn(ptn, max_plies=sys.maxsize):
         tak.move(all_moves[i])
         last_move = all_moves[i]
         positions.append(copy.deepcopy(tak))
-    return positions
+    return positions, result
+
+
+def extract_features(position):
+    features = numpy.zeros(36 * 6 + 1, dtype=numpy.float32)
+    for x, row in enumerate(position.board):
+        for y, square in enumerate(row):
+            if len(square.stones) > 0:
+                idx = x * 36 + y * 6
+                top_stone = square.stones[-1]
+                if top_stone.colour == 'white':
+                    color_factor = 1
+                elif top_stone.colour == 'black':
+                    color_factor = 0
+                else:
+                    raise Exception(f'Illegal piece {top_stone}')
+
+                if top_stone.stone_type == 'F':
+                    features[idx + color_factor] += 1.0
+                elif top_stone.stone_type == 'S':
+                    features[idx + 2 + color_factor] += 1.0
+                elif top_stone.stone_type == 'C':
+                    features[idx + 4 + color_factor] += 1.0
+                else:
+                    raise Exception(f'Illegal piece {top_stone}')
+
+    if position.player == "white":
+        features[36 * 6] = 1.0
+
+    return features
 
 
 def main(ptn_file):
@@ -69,7 +99,7 @@ def main(ptn_file):
 
     ptns = 0
 
-    positions = [];
+    positions = []
 
     with open(ptn_file) as f:
         line = f.readline()
@@ -77,13 +107,20 @@ def main(ptn_file):
         line = f.readline()
         while line:
             if line.startswith("[Event"):
-                positions.extend(add_ptn(ptn, max_plies))
+                game_positions, result = add_ptn(ptn, max_plies)
+                for position in game_positions:
+                    positions.append((position, result))
                 ptn = ''
                 ptns += 1
                 print(f'Read {ptns} ptns')
+                if ptns > 50:
+                    break
             ptn += line
             line = f.readline()
 
-    for position in positions[:10]:
+    for position, result in positions[:50]:
         print(position.print_state())
         print(position.get_tps())
+        print(extract_features(position))
+
+    return positions
